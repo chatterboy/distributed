@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-const int maxn = 1000000;
+const int maxn = 1000000; // # of operations are generated
 
 struct Queue { // for standard queue
 	int arr[maxn];
@@ -24,9 +24,13 @@ typedef struct __queue_t { // for concurrent queue
 } queue_t;
 
 
+// they are for storing the operations like enqueue and dequeue.
+// the value 1 is 'enequeue' and 2 is 'dequeue'.
 vector<int> operations1;
 vector<int> operations2;
 
+// this function generate the set of the  operations by randomzied algorithm.
+// note that this function will be compiled on modern c++.
 int generateOperations(vector<int> & operations) {
 	random_device rd;
 	mt19937 gen(rd());
@@ -53,6 +57,9 @@ int generateOperations(vector<int> & operations) {
 	return 0;
 }
 
+/*
+	This is for Michael and Scott concurrent queue
+*/
 void Queue_Init(queue_t * q) {
 	node_t * tmp = (node_t *)malloc(sizeof(node_t));
 	tmp->next = NULL;
@@ -88,6 +95,9 @@ int Queue_Dequeue(queue_t * q, int * value) {
 	return 0;
 }
 
+/*
+	This is for standard queue
+*/
 int isempty() {
 	int ret = q.head - q.tail;
 	return ret < 1 ? 1 : 0;
@@ -101,7 +111,7 @@ int dequeue() {
 	q.arr[q.tail++] = 0;
 }
 
-void mythread(vector<int> & operations, string name) { // for standard queue
+void mythread(vector<int> & operations, string name) { // for standard queue thread
 	printf("%s is running in standard queue.\n", name.c_str());
 	for (int i = 0; i < (int)operations.size(); ++i) {
 		pthread_mutex_lock(&q.lock);
@@ -121,7 +131,7 @@ void mythread(vector<int> & operations, string name) { // for standard queue
 	}
 }
 
-void mythread2(vector<int> & operations, string name) { // for concurrent queue
+void mythread2(vector<int> & operations, string name) { // for concurrent queue thread
 	printf("%s is running in concurrent queue.\n", name.c_str());
 	int val;
 	queue_t cq;
@@ -136,13 +146,30 @@ void mythread2(vector<int> & operations, string name) { // for concurrent queue
 	while (Queue_Dequeue(&cq, &val) != -1);
 }
 
+/*
+	This main() have a simple procedure to check the execution time
+	in both standard queue and concurrent queue. The steps are like
+	following.
+
+		1. Generate two sets of the operations that are both
+		   enqueue and dequeue with generateOperations().
+		
+		2. Run two threads for standard queue and check the
+		   execution time.
+
+		3. Like above step, run two thread for concurrent
+		   queue and check the execution time.
+
+		4. After finishing all above steps the results for
+		   execution time will print.
+*/
 int main() {
 	generateOperations(operations1);
 	generateOperations(operations2);
 //	for (int i = 0; i < (int)operations.size(); ++i) {
 //		printf("%d\n", operations[i]);
 //	}
-	pthread_mutex_init(&q.lock, NULL);
+	pthread_mutex_init(&q.lock, NULL); // this is global lock for a standard queue
 	auto t1 = chrono::high_resolution_clock::now();
 	thread th1(mythread, ref(operations1), string("operations1"));
 	thread th2(mythread, ref(operations2), string("operations2"));
